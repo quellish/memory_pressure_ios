@@ -1,0 +1,35 @@
+--- memory_pressure.c	2016-06-16 16:13:29.000000000 -0700
++++ memory_pressure_patched.c	2018-02-10 20:59:59.000000000 -0800
+@@ -26,8 +26,7 @@
+ #include <errno.h>
+ #include <getopt.h>
+ #include <string.h>
+-#include <mach/i386/vm_param.h>
+-#include <sys/kern_memorystatus.h>
++#include <mach/machine/vm_param.h>
+ #include <sys/sysctl.h>
+ #include <mach/mach.h>
+ #include <mach/task.h>
+@@ -36,7 +35,8 @@
+ #include <sys/mman.h>
+ #include <pthread.h>
+ #include <assert.h>
+-#include <dispatch/private.h>
++#include <dispatch/dispatch.h>
++#include <sys/syscall.h>
+ 
+ unsigned long	phys_mem = 0;            /* amount of physical memory in bytes */
+ unsigned int	phys_pages = 0;          /* number of physical memory pages */
+@@ -112,8 +112,10 @@
+ {
+ 	int error;
+ 
+-	error = memorystatus_get_level((user_addr_t) level);
+-
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wdeprecated-declarations"
++	error = syscall(SYS_memorystatus_get_level, level);
++#pragma clang diagnostic pop
+ 	if( error ) {
+ 		perror("memorystatus_get_level failed:");
+ 		exit(-1);
